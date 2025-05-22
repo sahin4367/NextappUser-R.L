@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RegisterForm(){
 
@@ -9,6 +10,8 @@ export default function RegisterForm(){
     const [email,setEamil] = useState("");
     const [password,setPassword] = useState("");
     const [error,setError] = useState("");
+
+    const router = useRouter();
 
     const hanleSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -19,6 +22,22 @@ export default function RegisterForm(){
         }
 
         try {
+
+            const resUserExist = await fetch('/api/userExists' , {
+                method : "POST",
+                headers : {
+                    "Content-Type" : "application/json"
+                },
+                body : JSON.stringify({ email })
+            })
+
+            const { user } = await resUserExist.json();
+            if (user) {
+                setError("User already exists");
+                return;
+            }
+
+
             const res = await fetch('/api/register' , {
                 method : "POST",
                 headers : {
@@ -34,6 +53,7 @@ export default function RegisterForm(){
             if(res.ok) {
                 const form = e.target as HTMLFormElement;
                 form.reset();
+                router.push('/');
             } else {
                 console.log("User registrations failed!");
             }
@@ -56,7 +76,7 @@ export default function RegisterForm(){
                 <form onSubmit={hanleSubmit} className="flex flex-col gap-4">
                     <input onChange={e => setName(e.target.value)} type="text" placeholder="Name" />
                     <input onChange={e => setEamil(e.target.value)} type="text" placeholder="Email" />
-                    <input onChange={e => setPassword(e.target.value)} type="text" placeholder="Password" />
+                    <input onChange={e => setPassword(e.target.value)} type="password" placeholder="Password" />
                     <button className="bg-green-600 text-white font-bold cursor-pointer px-6 py-2 ">Register</button>
 
                     {error && (
